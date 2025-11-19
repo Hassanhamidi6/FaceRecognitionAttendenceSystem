@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Face Attendance - Admin Panel</title>
+<style>
+    body { font-family: Arial, sans-serif; margin: 0; background: #f5f5f5; }
+    .header { background: #1e1e1e; color: white; padding: 18px; text-align: center; font-size: 22px; }
+    .container { max-width: 1100px; margin: auto; padding: 20px; }
+    .card { background: white; padding: 20px; border-radius: 8px; margin-bottom: 22px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); }
+    input, select, button { padding: 10px; width: 100%; margin-top: 8px; margin-bottom: 12px; border-radius: 4px; border: 1px solid #ccc; }
+    button { background: #1e88e5; color: white; cursor: pointer; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 8px; border-bottom: 1px solid #eee; text-align: left; }
+    th { background: #1e88e5; color: white; }
+    .row { display:flex; gap:12px; }
+    .col { flex:1; }
+</style>
+</head>
+<body>
+<div class="header">Admin Panel — Face Attendance</div>
+<div class="container">
+  <div class="card">
+    <h3>Register Employee</h3>
+    <div class="row">
+      <div class="col">
+        <input id="name" placeholder="Name">
+      </div>
+      <div class="col">
+        <input id="email" placeholder="Email">
+      </div>
+      <div class="col">
+        <input id="phone" placeholder="Phone">
+      </div>
+      <div class="col">
+        <input id="position" placeholder="Position">
+      </div>
+    </div>
+    <input type="file" id="photo">
+    <button onclick="registerEmployee()">Register & Upload</button>
+    <p id="regMsg"></p>
+  </div>
+
+  <div class="card">
+    <h3>Employees</h3>
+    <button onclick="loadEmployees()">Refresh</button>
+    <table id="employeeTable">
+      <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Position</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Attendance</h3>
+    <div style="display:flex; gap:8px;">
+      <input id="filter_emp" placeholder="Employee ID (optional)">
+      <input id="filter_date" placeholder="Date YYYY-MM-DD (optional)">
+      <button onclick="loadAttendance()">Load</button>
+    </div>
+    <table id="attendanceTable">
+      <thead><tr><th>ID</th><th>Emp ID</th><th>Date</th><th>Check-in</th><th>Check-out</th><th>Status</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const API = "";
+
+async function registerEmployee() {
+  const name = document.getElementById("name").value;
+  if (!name) { document.getElementById("regMsg").innerText = "Name is required"; return; }
+  const data = new FormData();
+  data.append("name", name);
+  data.append("email", document.getElementById("email").value);
+  data.append("phone", document.getElementById("phone").value);
+  data.append("position", document.getElementById("position").value);
+  const file = document.getElementById("photo").files[0];
+  if (file) data.append("photo", file);
+
+  const res = await fetch("/register_employee", { method: "POST", body: data });
+  const j = await res.json();
+  if (!res.ok) {
+    document.getElementById("regMsg").innerText = j.message || (j.error || JSON.stringify(j));
+  } else {
+    document.getElementById("regMsg").innerText = `Registered id=${j.employee_id}, encodings=${j.encodings_saved}`;
+    loadEmployees();
+  }
+}
+
+async function loadEmployees() {
+  const res = await fetch("/employees");
+  const data = await res.json();
+  const tbody = document.querySelector("#employeeTable tbody");
+  tbody.innerHTML = "";
+  data.forEach(e => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${e.employee_id}</td><td>${e.name}</td><td>${e.email || ""}</td><td>${e.position || ""}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+async function loadAttendance() {
+  const emp = document.getElementById("filter_emp").value;
+  const date = document.getElementById("filter_date").value;
+  let url = "/attendance";
+  const params = [];
+  if (emp) params.push("employee_id=" + encodeURIComponent(emp));
+  if (date) params.push("date=" + encodeURIComponent(date));
+  if (params.length) url += "?" + params.join("&");
+  const res = await fetch(url);
+  const data = await res.json();
+  const tbody = document.querySelector("#attendanceTable tbody");
+  tbody.innerHTML = "";
+  data.forEach(a => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${a.attendance_id}</td><td>${a.employee_id}</td><td>${a.date}</td><td>${a.check_in_time||""}</td><td>${a.check_out_time||""}</td><td>${a.status}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// initial load
+loadEmployees();
+loadAttendance();
+</script>
+</body>
+</html>

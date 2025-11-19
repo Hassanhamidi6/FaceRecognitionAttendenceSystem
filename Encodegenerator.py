@@ -2,21 +2,8 @@ import cv2
 import face_recognition
 import pickle
 import os
-import firebase_admin
-from firebase_admin import credentials
-from firebase_admin import storage
-from firebase_admin import db
 
-
-cred = credentials.Certificate("C:\\Users\\User\\Downloads\\faceattendanceinrealtime.json")
-firebase_admin.initialize_app(cred, {
-    'databaseURL': 'https://faceattendanceinrealtime-1278c-default-rtdb.firebaseio.com/',
-    'storageBucket': 'faceattendanceinrealtime-1278c.appspot.com'  #here we will write storage bucket URL of our firebase project
-})  
-
-
-# importing the Employee images
-
+# Path to the folder containing employee images
 folderPath = "EmployeeImages"
 imgList = []
 EmpIds = []
@@ -26,13 +13,6 @@ for path in os.listdir(folderPath):
     imgList.append(img)
     EmpIds.append(os.path.splitext(path)[0])
     # print(path.split('.')[0])
-
-    # Upload images to Firebase Storage
-    filename = os.path.join(folderPath, path)
-    bucket = storage.bucket()
-    blob = bucket.blob(f'StudentImages/{os.path.basename(filename)}')
-    blob.upload_from_filename(filename)
-    print(f'Uploaded {filename} to Firebase Storage.')
 
 print(EmpIds) 
 
@@ -48,12 +28,14 @@ def findEncodings(imagesList):
 print("Encoding Started...")
 encodeListKnown = findEncodings(imgList)
 encodeListKnownwithIds = [EmpIds, encodeListKnown]
-# print(encodeListKnown)
+print(encodeListKnownwithIds)
 print("Encoding Complete")
 
-# Save the encodings and IDs using pickle
+# Save the encodings and IDs in pickle file
 file = open("EncodeFile.p", 'wb') 
 pickle.dump(encodeListKnownwithIds, file)
 file.close()
 
 print("File Saved")
+
+

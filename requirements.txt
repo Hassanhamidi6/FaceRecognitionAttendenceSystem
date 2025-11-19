@@ -4,6 +4,12 @@ face-recognition
 opencv-python   
 setuptools
 numpy
-# firebase-admin
+streamlit
+python-dotenv
+firebase-admin
+pandas 
+fastapi
+pydantic
+uvicorn
 # mtcnn
 # tensorflow
